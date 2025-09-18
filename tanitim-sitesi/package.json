@@ -2,7 +2,6 @@
   "name": "tanitim-sitesi",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "dependencies": {
     "@react-three/drei": "^10.7.4",
     "@react-three/fiber": "^9.3.0",
