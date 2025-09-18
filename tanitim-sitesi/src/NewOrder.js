@@ -22,21 +22,29 @@ const NewOrder = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Burada siparişi localStorage'a kaydedebiliriz veya API'ye gönderebiliriz
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const order = {
-      id: Math.max(...orders.map(o => o.id), 0) + 1,
-      ...newOrder,
-      orderDate: new Date(),
-      status: 'pending_payment'
-    };
-    orders.unshift(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
     
-    // Admin paneline yönlendir
-    navigate('/admin');
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newOrder)
+      });
+      
+      if (response.ok) {
+        // Admin paneline yönlendir
+        navigate('/admin');
+      } else {
+        console.error('Sipariş oluşturulamadı:', response.statusText);
+        alert('Sipariş oluşturulurken hata oluştu!');
+      }
+    } catch (error) {
+      console.error('Sipariş oluşturulurken hata:', error);
+      alert('Sipariş oluşturulurken hata oluştu!');
+    }
   };
 
   return (

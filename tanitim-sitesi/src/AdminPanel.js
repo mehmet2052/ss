@@ -12,67 +12,47 @@ const AdminPanel = () => {
     return new Date();
   };
 
-  // Başlangıç sipariş verilerini oluştur
+  // Sunucudan siparişleri yükle
   useEffect(() => {
-    // localStorage'dan siparişleri yükle
-    const savedOrders = localStorage.getItem('orders');
-    if (savedOrders) {
-      const parsedOrders = JSON.parse(savedOrders).map(order => ({
-        ...order,
-        orderDate: new Date(order.orderDate)
-      }));
-      setOrders(parsedOrders);
-    } else {
-      // İlk kez çalışıyorsa örnek verileri oluştur
-      const initialOrders = [
-        {
-          id: 1,
-          productName: "Domalma Am Parmaklama",
-          customerName: "Arsz Sikici",
-          email: "Dümdük9@email.com",
-          quantity: 1,
-          price: 18000,
-          orderDate: getCurrentDate(),
-          status: "pending_payment",
-          description: "Domalarak Am Parmaklama Popo Ayırma 5 Dakika Ayakta Am Parmaklama 5dk",
-          notes: "Müşteri onay verirse ödeme yapılacak"
-        },
-        {
-          id: 2,
-          productName: "Meme Okşama",
-          customerName: "Dümdük9",
-          email: "Dümdük9@email.com",
-          quantity: 2,
-          price: 6950,
-          orderDate: getCurrentDate(),
-          status: "pending_payment",
-          description: "Öne Doğru Eğilerek Meme Okşama Efeksiz 5 Dakika",
-          notes: "Müşteri onay verirse ödeme yapılacak"
-        },
-        {
-          id: 3,
-          productName: "Boşalma",
-          customerName: "Cookiee",
-          email: "Cookie82@email.com",
-          quantity: 1,
-          price: 13500,
-          orderDate: getCurrentDate(),
-          status: "pending_payment",
-          description: "Zevk Suyum Gelene Kadar Am Parmaklayarak Boşalma",
-          notes: "Müşteri onay verirse ödeme yapılacak"
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/orders');
+        if (response.ok) {
+          const ordersData = await response.json();
+          const parsedOrders = ordersData.map(order => ({
+            ...order,
+            orderDate: new Date(order.orderDate)
+          }));
+          setOrders(parsedOrders);
+        } else {
+          console.error('Siparişler yüklenemedi:', response.statusText);
         }
-      ];
-      setOrders(initialOrders);
-      localStorage.setItem('orders', JSON.stringify(initialOrders));
-    }
+      } catch (error) {
+        console.error('Siparişler yüklenirken hata:', error);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
-  // Siparişler değiştiğinde localStorage'a kaydet
-  useEffect(() => {
-    if (orders.length > 0) {
-      localStorage.setItem('orders', JSON.stringify(orders));
+  // Siparişleri sunucuda güncelle
+  const updateOrderOnServer = async (orderId, updates) => {
+    try {
+      const response = await fetch(`/api/orders?id=${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates)
+      });
+      
+      if (!response.ok) {
+        console.error('Sipariş güncellenemedi:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Sipariş güncellenirken hata:', error);
     }
-  }, [orders]);
+  };
 
   // Tarih formatlama
   const formatDate = (date) => {
@@ -122,7 +102,13 @@ const AdminPanel = () => {
       setUploadMsgByOrder(prev => ({ ...prev, [orderId]: { type: 'success', text: 'Video Telegram\'a gönderildi.' } }));
       setSelectedFileByOrder(prev => ({ ...prev, [orderId]: null }));
       
-      // Sipariş durumunu güncelle
+      // Sipariş durumunu sunucuda güncelle
+      await updateOrderOnServer(orderId, { 
+        status: 'pending_approval', 
+        notes: 'Müşteri onayı bekleniyor' 
+      });
+      
+      // Local state'i güncelle
       const updatedOrders = orders.map(order => 
         order.id === orderId 
           ? { ...order, status: 'pending_approval', notes: 'Müşteri onayı bekleniyor' }
@@ -137,23 +123,42 @@ const AdminPanel = () => {
   };
 
   // Sipariş silme
-  const handleDeleteOrder = (orderId) => {
+  const handleDeleteOrder = async (orderId) => {
     if (window.confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
-      const updatedOrders = orders.filter(order => order.id !== orderId);
-      setOrders(updatedOrders);
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      try {
+        const response = await fetch(`/api/orders?id=${orderId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          const updatedOrders = orders.filter(order => order.id !== orderId);
+          setOrders(updatedOrders);
+        } else {
+          console.error('Sipariş silinemedi:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Sipariş silinirken hata:', error);
+      }
     }
   };
 
   // Müşteri onayı
-  const handleApprovePayment = (orderId) => {
-    const updatedOrders = orders.map(order => 
-      order.id === orderId 
-        ? { ...order, status: 'pending_approval', notes: 'Müşteri onayı bekleniyor' }
-        : order
-    );
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+  const handleApprovePayment = async (orderId) => {
+    try {
+      await updateOrderOnServer(orderId, { 
+        status: 'pending_approval', 
+        notes: 'Müşteri onayı bekleniyor' 
+      });
+      
+      const updatedOrders = orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status: 'pending_approval', notes: 'Müşteri onayı bekleniyor' }
+          : order
+      );
+      setOrders(updatedOrders);
+    } catch (error) {
+      console.error('Sipariş onaylanırken hata:', error);
+    }
   };
 
   return (
