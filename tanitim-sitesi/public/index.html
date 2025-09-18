@@ -10,9 +10,34 @@
       content="Admin Panel - Sipariş Yönetim Sistemi"
     />
     <title>Admin Panel - Sipariş Yönetimi</title>
+    
+    <!-- Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//api.telegram.org">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="/static/css/main.css" as="style">
+    <link rel="preload" href="/static/js/main.js" as="script">
   </head>
   <body>
     <noscript>Bu uygulamayı çalıştırmak için JavaScript'i etkinleştirmeniz gerekir.</noscript>
     <div id="root"></div>
+    
+    <!-- Performance Monitoring -->
+    <script>
+      // Preload critical resources
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(function() {
+          // Preload non-critical resources
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = '/static/css/main.css';
+          document.head.appendChild(link);
+        });
+      }
+    </script>
   </body>
 </html>
