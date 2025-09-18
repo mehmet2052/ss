@@ -1,5 +1,22 @@
 {
-  "buildCommand": "cd tanitim-sitesi && npm run build",
-  "outputDirectory": "tanitim-sitesi/build",
-  "installCommand": "cd tanitim-sitesi && npm install"
+  "version": 2,
+  "builds": [
+    {
+      "src": "tanitim-sitesi/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
