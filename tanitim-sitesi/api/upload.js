@@ -1,6 +1,6 @@
-const multer = require('multer');
-const axios = require('axios');
-const FormData = require('form-data');
+import multer from 'multer';
+import axios from 'axios';
+import FormData from 'form-data';
 
 // Telegram Bot Configuration
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
