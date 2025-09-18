@@ -7,10 +7,6 @@ const AdminPanel = () => {
   const [uploadingOrderId, setUploadingOrderId] = useState(null);
   const [uploadMsgByOrder, setUploadMsgByOrder] = useState({});
 
-  // Güncel tarih fonksiyonu
-  const getCurrentDate = () => {
-    return new Date();
-  };
 
   // Sunucudan siparişleri yükle
   useEffect(() => {
