@@ -4,6 +4,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,45 +17,77 @@ const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 app.use(cors());
 app.use(express.json());
 
-// Orders data storage
-let orders = [
-  {
-    id: 1,
-    productName: "Domalma Am Parmaklama",
-    customerName: "Arsz Sikici",
-    email: "Dümdük9@email.com",
-    quantity: 1,
-    price: 18000,
-    orderDate: new Date().toISOString(),
-    status: "pending_payment",
-    description: "Domalarak Am Parmaklama Popo Ayırma 5 Dakika Ayakta Am Parmaklama 5dk",
-    notes: "Müşteri onay verirse ödeme yapılacak"
-  },
-  {
-    id: 2,
-    productName: "Meme Okşama",
-    customerName: "Dümdük9",
-    email: "Dümdük9@email.com",
-    quantity: 2,
-    price: 6950,
-    orderDate: new Date().toISOString(),
-    status: "pending_payment",
-    description: "Öne Doğru Eğilerek Meme Okşama Efeksiz 5 Dakika",
-    notes: "Müşteri onay verirse ödeme yapılacak"
-  },
-  {
-    id: 3,
-    productName: "Boşalma",
-    customerName: "Cookiee",
-    email: "Cookie82@email.com",
-    quantity: 1,
-    price: 13500,
-    orderDate: new Date().toISOString(),
-    status: "pending_payment",
-    description: "Zevk Suyum Gelene Kadar Am Parmaklayarak Boşalma",
-    notes: "Müşteri onay verirse ödeme yapılacak"
+// Orders data storage - JSON file path
+const ordersFilePath = path.join(__dirname, 'data', 'orders.json');
+
+// Load orders from JSON file
+let orders = [];
+try {
+  if (fs.existsSync(ordersFilePath)) {
+    const data = fs.readFileSync(ordersFilePath, 'utf8');
+    orders = JSON.parse(data);
+  } else {
+    // Create default orders if file doesn't exist
+    orders = [
+      {
+        id: 1,
+        productName: "Domalma Am Parmaklama",
+        customerName: "Arsz Sikici",
+        email: "Dümdük9@email.com",
+        quantity: 1,
+        price: 18000,
+        orderDate: new Date().toISOString(),
+        status: "pending_payment",
+        description: "Domalarak Am Parmaklama Popo Ayırma 5 Dakika Ayakta Am Parmaklama 5dk",
+        notes: "Müşteri onay verirse ödeme yapılacak"
+      },
+      {
+        id: 2,
+        productName: "Meme Okşama",
+        customerName: "Dümdük9",
+        email: "Dümdük9@email.com",
+        quantity: 2,
+        price: 6950,
+        orderDate: new Date().toISOString(),
+        status: "pending_payment",
+        description: "Öne Doğru Eğilerek Meme Okşama Efeksiz 5 Dakika",
+        notes: "Müşteri onay verirse ödeme yapılacak"
+      },
+      {
+        id: 3,
+        productName: "Boşalma",
+        customerName: "Cookiee",
+        email: "Cookie82@email.com",
+        quantity: 1,
+        price: 13500,
+        orderDate: new Date().toISOString(),
+        status: "pending_payment",
+        description: "Zevk Suyum Gelene Kadar Am Parmaklayarak Boşalma",
+        notes: "Müşteri onay verirse ödeme yapılacak"
+      }
+    ];
+    saveOrdersToFile();
   }
-];
+} catch (error) {
+  console.error('Error loading orders:', error);
+  orders = [];
+}
+
+// Function to save orders to JSON file
+function saveOrdersToFile() {
+  try {
+    // Ensure data directory exists
+    const dataDir = path.dirname(ordersFilePath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2), 'utf8');
+    console.log('Orders saved to file');
+  } catch (error) {
+    console.error('Error saving orders:', error);
+  }
+}
 
 // Increase timeout for large file uploads
 app.use((req, res, next) => {
@@ -158,30 +191,33 @@ app.post('/api/orders', (req, res) => {
     status: 'pending_payment'
   };
   orders.push(newOrder);
+  saveOrdersToFile(); // Save to JSON file
   res.status(201).json(newOrder);
 });
 
 app.put('/api/orders', (req, res) => {
   const { id } = req.query;
   const orderIndex = orders.findIndex(order => order.id === parseInt(id));
-  
+
   if (orderIndex === -1) {
     return res.status(404).json({ error: 'Sipariş bulunamadı' });
   }
 
   orders[orderIndex] = { ...orders[orderIndex], ...req.body };
+  saveOrdersToFile(); // Save to JSON file
   res.json(orders[orderIndex]);
 });
 
 app.delete('/api/orders', (req, res) => {
   const { id } = req.query;
   const orderIndex = orders.findIndex(order => order.id === parseInt(id));
-  
+
   if (orderIndex === -1) {
     return res.status(404).json({ error: 'Sipariş bulunamadı' });
   }
 
   orders.splice(orderIndex, 1);
+  saveOrdersToFile(); // Save to JSON file
   res.json({ message: 'Sipariş silindi' });
 });
 
