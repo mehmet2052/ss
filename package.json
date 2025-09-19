@@ -28,7 +28,7 @@
     "nodemon": "^3.1.0"
   },
   "scripts": {
-    "start": "npx react-scripts start",
+    "start": "bash node_modules/.bin/react-scripts start",
     "build": "bash node_modules/.bin/react-scripts build",
     "test": "npx react-scripts test",
     "eject": "npx react-scripts eject",
