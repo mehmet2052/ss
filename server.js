@@ -3,9 +3,10 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 // Telegram Bot Configuration
 const TELEGRAM_BOT_TOKEN = '8006450272:AAH9iIYsQNw5i2MLjlEzD0iCLScTDNFMYyI';
@@ -13,6 +14,47 @@ const TELEGRAM_CHAT_ID = '1105436506'; // Telegram kanal ID
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 app.use(cors());
+app.use(express.json());
+
+// Orders data storage
+let orders = [
+  {
+    id: 1,
+    productName: "Domalma Am Parmaklama",
+    customerName: "Arsz Sikici",
+    email: "Dümdük9@email.com",
+    quantity: 1,
+    price: 18000,
+    orderDate: new Date().toISOString(),
+    status: "pending_payment",
+    description: "Domalarak Am Parmaklama Popo Ayırma 5 Dakika Ayakta Am Parmaklama 5dk",
+    notes: "Müşteri onay verirse ödeme yapılacak"
+  },
+  {
+    id: 2,
+    productName: "Meme Okşama",
+    customerName: "Dümdük9",
+    email: "Dümdük9@email.com",
+    quantity: 2,
+    price: 6950,
+    orderDate: new Date().toISOString(),
+    status: "pending_payment",
+    description: "Öne Doğru Eğilerek Meme Okşama Efeksiz 5 Dakika",
+    notes: "Müşteri onay verirse ödeme yapılacak"
+  },
+  {
+    id: 3,
+    productName: "Boşalma",
+    customerName: "Cookiee",
+    email: "Cookie82@email.com",
+    quantity: 1,
+    price: 13500,
+    orderDate: new Date().toISOString(),
+    status: "pending_payment",
+    description: "Zevk Suyum Gelene Kadar Am Parmaklayarak Boşalma",
+    notes: "Müşteri onay verirse ödeme yapılacak"
+  }
+];
 
 // Increase timeout for large file uploads
 app.use((req, res, next) => {
@@ -103,10 +145,58 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// Orders API endpoints
+app.get('/api/orders', (req, res) => {
+  res.json(orders);
+});
+
+app.post('/api/orders', (req, res) => {
+  const newOrder = {
+    id: Math.max(...orders.map(o => o.id), 0) + 1,
+    ...req.body,
+    orderDate: new Date().toISOString(),
+    status: 'pending_payment'
+  };
+  orders.push(newOrder);
+  res.status(201).json(newOrder);
+});
+
+app.put('/api/orders', (req, res) => {
+  const { id } = req.query;
+  const orderIndex = orders.findIndex(order => order.id === parseInt(id));
+  
+  if (orderIndex === -1) {
+    return res.status(404).json({ error: 'Sipariş bulunamadı' });
+  }
+
+  orders[orderIndex] = { ...orders[orderIndex], ...req.body };
+  res.json(orders[orderIndex]);
+});
+
+app.delete('/api/orders', (req, res) => {
+  const { id } = req.query;
+  const orderIndex = orders.findIndex(order => order.id === parseInt(id));
+  
+  if (orderIndex === -1) {
+    return res.status(404).json({ error: 'Sipariş bulunamadı' });
+  }
+
+  orders.splice(orderIndex, 1);
+  res.json({ message: 'Sipariş silindi' });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 app.listen(port, () => {
-  console.log(`Upload proxy server listening on http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
