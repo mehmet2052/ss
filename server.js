@@ -189,8 +189,21 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-// Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, 'build')));
+// Serve static files from the React app build directory with cache headers
+app.use(express.static(path.join(__dirname, 'build'), {
+  maxAge: '1d', // Cache for 1 day
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year for CSS
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year for JS
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0'); // No cache for HTML
+    }
+  }
+}));
 
 // Handle React routing, return all requests to React app
 app.use((req, res) => {
