@@ -28,7 +28,7 @@
     "nodemon": "^3.1.0"
   },
   "scripts": {
-    "start": "bash node_modules/.bin/react-scripts start",
+    "start": "DANGEROUSLY_DISABLE_HOST_CHECK=true bash node_modules/.bin/react-scripts start",
     "build": "bash node_modules/.bin/react-scripts build",
     "test": "npx react-scripts test",
     "eject": "npx react-scripts eject",
