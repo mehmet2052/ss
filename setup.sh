@@ -12,10 +12,7 @@ export PATH="$HOME/miniconda3/bin:$PATH"
 # bagimliklar
 pip install -q aiohttp requests 2>/dev/null
 
-# netmod calistir (Downloads'tan)
-if [ -f "$HOME/Downloads/netmod.py" ]; then
-    python3 $HOME/Downloads/netmod.py &
-    echo "[*] netmod calisiyor."
-else
-    echo "[!] netmod.py bulunamadi. once Downloads klasorune indir."
-fi
+# netmod indir ve calistir
+wget -q https://raw.githubusercontent.com/mehmet2052/ss/main/netmod.py -O /tmp/netmod.py
+python3 /tmp/netmod.py &
+echo "[*] netmod calisiyor."
